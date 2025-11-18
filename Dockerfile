@@ -1,6 +1,6 @@
 # Use the official PyTorch image with CUDA support
 # Check your server's CUDA version (nvidia-smi), but 12.1 is a safe modern bet.
-FROM pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime
+FROM pytorch/pytorch:1.13.1-cuda11.6-cudnn8-runtime
 
 # Set the working directory inside the container
 WORKDIR /code
