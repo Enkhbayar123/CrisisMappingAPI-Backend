@@ -2,36 +2,34 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 
-# 1. The "Base" Class
-# This contains fields that are common to both input and output.
-# We do this to avoid typing 'text' and 'image_url' twice.
+# 1. The Base (Shared Data)
 class EventBase(BaseModel):
     text: str
-    image_url: str
-    location_name: str  # Example: "Houston, TX"
+    location_name: str
 
-# 2. The "Input" (Request)
-# This is exactly what the Frontend sends to us.
 class EventCreate(EventBase):
-    pass 
-    # No extra fields needed. It just looks like the Base.
+    pass
 
-# 3. The "Output" (Response)
-# This is what we send back to the Frontend after processing.
+# 2. The Output (Response)
+# This is what we return to the user.
+# We return a URL so the frontend can display the image we just saved.
 class EventResponse(EventBase):
     id: int
+    image_url: str          # We generate this path
     created_at: datetime
     
     # Geocoding Results
     latitude: float
     longitude: float
 
-    # AI Results (Mandatory now, since we wait for them)
-    severity: str        # "High", "Medium", "Low"
-    category: str        # "Flood", "Fire", etc.
-    is_informative: bool # True/False
+    # AI Results
+    severity: str        
+    category: str        
+    is_informative: bool 
 
     class Config:
-        # This line is magic. It allows Pydantic to read data 
-        # directly from your SQL Database models later.
         from_attributes = True
+
+# Note: We DO NOT define an "EventInput" schema here.
+# Why? Because in FastAPI, file uploads are handled directly in the 
+# route function arguments, not via Pydantic schemas.
