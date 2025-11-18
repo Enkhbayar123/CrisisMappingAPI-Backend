@@ -1,5 +1,34 @@
 services:
-  # Service 1: The Database (PostgreSQL + PostGIS)
+  # 1. YOUR BACKEND API (New!)
+  backend:
+    build: .
+    container_name: crisis_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      # Map code so you don't have to rebuild for small changes
+      - .:/code
+      # PERSIST WEIGHTS: Don't re-download AI models every restart
+      - ./ai_weights:/root/.cache/torch
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB}
+    depends_on:
+      - db
+    # --- GPU CONFIGURATION START ---
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1 # Use 'all' if you want all GPUs
+              capabilities: [gpu]
+    # --- GPU CONFIGURATION END ---
+
+  # 2. The Database (Existing)
   db:
     image: postgis/postgis:15-3.3
     container_name: crisis_db
@@ -9,12 +38,11 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      # Maps port 5432 on server to 5432 inside container
       - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  # Service 2: Database Viewer (PgAdmin)
+  # 3. Database Viewer (Existing)
   pgadmin:
     image: dpage/pgadmin4
     container_name: crisis_pgadmin
@@ -26,6 +54,5 @@ services:
     depends_on:
       - db
 
-# Define the storage volume
 volumes:
   postgres_data:
