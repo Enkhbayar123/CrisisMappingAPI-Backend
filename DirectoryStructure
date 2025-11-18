@@ -1,0 +1,25 @@
+project_root/
+├── docker-compose.yml       # Sets up Postgres (DB) & Redis (Queue)
+├── .env                     # Secrets (DB passwords, API keys)
+│
+├── backend/                 # YOUR DOMAIN (The API Team)
+│   ├── Dockerfile           # Instructions to build the server
+│   ├── main.py              # Entry point (The Receptionist)
+│   ├── config.py            # Settings loader
+│   │
+│   ├── api/                 # All HTTP logic
+│   │   ├── routes.py        # Endpoints (POST /events, GET /events)
+│   │   └── schemas.py       # Data contracts (Input/Output JSON definitions)
+│   │
+│   ├── db/                  # Database logic
+│   │   ├── database.py      # Connection setup
+│   │   └── models.py        # SQL Tables (Events, Geo-coords)
+│   │
+│   └── core/                # The Bridge to the Back Office
+│       └── celery_app.py    # Configuration for the Task Queue
+│
+└── ai_engine/               # SEPARATE DOMAIN (The AI Team)
+    ├── __init__.py          # Makes this a Python module
+    ├── interface.py         # The ONE function you call (process_crisis_data)
+    ├── model_loader.py      # Code to load CLIP/Attention models
+    └── weights/             # The heavy .pth files
