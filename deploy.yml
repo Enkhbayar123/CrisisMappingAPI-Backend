@@ -1,0 +1,26 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            # STOP! Change this line to your actual folder name:
+            cd /home/YOUR_USERNAME/YOUR_REPO_NAME
+            
+            # Pull the new code
+            git pull origin main
+            
+            # (Optional) Restart command, e.g.: pm2 restart all
