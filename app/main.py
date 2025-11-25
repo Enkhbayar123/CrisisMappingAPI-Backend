@@ -2,6 +2,7 @@ from fastapi import FastAPI, UploadFile, File, Form, Depends
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from contextlib import asynccontextmanager
+import os
 import shutil
 
 # Import your modules
