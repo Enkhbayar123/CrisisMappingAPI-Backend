@@ -40,6 +40,8 @@ async def create_event(
     file: UploadFile = File(...), 
     text: str = Form(...), 
     location_name: str = Form(...),
+    latitude: float = Form(...),
+    longitude: float = Form(...),
     db: Session = Depends(get_db)
 ):
     # 1. Save File
@@ -48,21 +50,18 @@ async def create_event(
         shutil.copyfileobj(file.file, buffer)
     image_url = f"/static/images/{file.filename}"
 
-    # 2. Geocoding (Keep simple for now, or replace with your script)
-    lat, lon = 29.7604, -95.3698 
-
-    # 3. Run AI (Uses the pre-loaded GPU model)
+    # 2. Run AI (Uses the pre-loaded GPU model)
     # This runs on your LOCAL SERVER resources
     ai_results = ai_engine.predict(text, file_location)
 
-    # 4. Save to DB
+    # 3. Save to DB
     new_event = models.CrisisEvent(
         text=text,
         location_name=location_name,
         image_url=image_url,
-        latitude=lat,
-        longitude=lon,
-        geom=f"POINT({lon} {lat})", 
+        latitude=latitude,
+        longitude=longitude,
+        geom=f"POINT({longitude} {latitude})", 
         
         # Unpack AI results
         severity=ai_results["severity"],
