@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from contextlib import asynccontextmanager
 import os
 import shutil
+from fastapi.middleware.cors import CORSMiddleware
 
 # Import your modules
 from . import models, schemas, database
@@ -21,6 +22,13 @@ async def lifespan(app: FastAPI):
 # Initialize App with Lifespan
 app = FastAPI(lifespan=lifespan)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins (for testing)
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 # Mount Static Folder
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
