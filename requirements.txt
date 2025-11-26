@@ -4,6 +4,6 @@ sqlalchemy
 geoalchemy2
 psycopg2-binary
 python-multipart
-torch  # (Usually pre-installed in the base image, but good to list)
-# transformers (Add this later when you have the real model)
-# pillow
+torch
+transformers
+pillow
