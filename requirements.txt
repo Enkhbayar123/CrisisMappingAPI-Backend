@@ -1,9 +1,17 @@
+# --- Backend Infrastructure ---
 fastapi
 uvicorn
 sqlalchemy
 geoalchemy2
 psycopg2-binary
 python-multipart
-torch
-transformers==4.30.2
-pillow
+
+# --- Model Dependencies (From your requirements.yml) ---
+# We pin these to match your working environment exactly
+torch==2.2.0
+torchvision==0.17.0
+transformers==4.24.0
+pillow==8.4.0
+timm==0.9.16
+scikit-learn==1.0.1
+termcolor==1.1.0
