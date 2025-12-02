@@ -11,26 +11,26 @@ import os
 # Task 1: Informativeness (2 Classes)
 # 0: not_informative, 1: informative
 INFO_LABELS = [
-    "not_informative", 
+    "not informative", 
     "informative"
 ]
 
 # Task 2: Humanitarian (6 Classes)
 # Based on 'labels_task2' in crisismmd_dataset.py
 CATEGORY_LABELS = [
-    "infrastructure_and_utility_damage",       # 0
-    "not_humanitarian",                        # 1
-    "other_relevant_information",              # 2
-    "rescue_volunteering_or_donation_effort",  # 3
-    "vehicle_damage",                          # 4
-    "affected_individuals"                     # 5 (Includes injured/dead/missing)
+    "infrastructure",       # 0
+    "not humanitarian",                        # 1
+    "other relevant information",              # 2
+    "rescue volunteering",  # 3
+    "vehicle damage",                          # 4
+    "affected individuals"                     # 5 (Includes injured/dead/missing)
 ]
 
 # Task 3: Damage Severity (3 Classes)
 SEVERITY_LABELS = [
-    "little_or_no_damage", # 0
-    "mild_damage",         # 1
-    "severe_damage"        # 2
+    "little or no damage", # 0
+    "mild damage",         # 1
+    "severe damage"        # 2
 ]
 
 # --- 2. THE MODEL ARCHITECTURE (From models_clip.py) ---
