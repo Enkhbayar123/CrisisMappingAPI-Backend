@@ -13,30 +13,38 @@ from .ai_core.service import ai_engine  # Import the global instance
 # --- LIFESPAN (The Startup Manager) ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # 0. ENSURE STATIC DIRECTORIES EXIST ON STARTUP
+    os.makedirs("app/static/images", exist_ok=True)
+    print("Checked/Created static directories.")
+
     # 1. Startup: Load the AI Model onto the GPU
     ai_engine.load_model()
     yield
-    # 2. Shutdown: Clean up resources (if needed)
+    # 2. Shutdown: Clean up resources
     print("Server shutting down...")
 
 # Initialize App with Lifespan
 app = FastAPI(lifespan=lifespan)
+
+# Define Allowed Origins
 origins = [
-    'http://localhost:3000',
-    'https://crisis-mapping-frontend.vercel.app',
-    'http://192.168.1.47:3000',
-    # Add your specific backend IP if you test directly against it from a browser
-    'http://203.252.106.25:8000', 
-]
+        'http://localhost:3000',
+        'https://crisis-mapping-frontend.vercel.app',
+        'http://192.168.1.47:3000',
+        'http://203.252.106.25:8000', 
+      ]
 
 app.add_middleware(
     CORSMiddleware,
-    # CHANGE THIS: Use the explicit 'origins' list instead of ["*"]
-    allow_origins=["*"],  
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=origins, 
+    allow_credentials=True,
+    allow_methods=["*"],  
+    allow_headers=["*"], 
 )
+
+# Ensure the static directory exists before mounting
+os.makedirs("app/static", exist_ok=True)
+
 # Mount Static Folder
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
@@ -50,10 +58,11 @@ def get_db():
         yield db
     finally:
         db.close()
+
 @app.get("/events", response_model=list[schemas.EventResponse])
 def get_events(db: Session = Depends(get_db)):
-    # Fetch all crisis events from the database
     return db.query(models.CrisisEvent).all()
+
 # --- THE ENDPOINT ---
 @app.post("/events", response_model=schemas.EventResponse)
 async def create_event(
@@ -65,21 +74,17 @@ async def create_event(
     db: Session = Depends(get_db)
 ):
     # 1. Save File
-    # Define the directory explicitly
     upload_dir = "app/static/images"
-    
-    # CRITICAL FIX: Create the directory if it does not exist
     os.makedirs(upload_dir, exist_ok=True)
     
     file_location = f"{upload_dir}/{file.filename}"
     
-    # Now it is safe to open the file
     with open(file_location, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
         
     image_url = f"/static/images/{file.filename}"
+
     # 2. Run AI (Uses the pre-loaded GPU model)
-    # This runs on your LOCAL SERVER resources
     ai_results = ai_engine.predict(text, file_location)
 
     # 3. Save to DB
@@ -94,7 +99,9 @@ async def create_event(
         # Unpack AI results
         severity=ai_results["severity"],
         category=ai_results["category"],
-        is_informative=ai_results["is_informative"]
+        
+        # FIX: Convert the String "informative" to a Boolean True/False
+        is_informative=(ai_results["is_informative"] == "informative")
     )
 
     db.add(new_event)
