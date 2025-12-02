@@ -24,7 +24,8 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              count: 1 # Use 'all' if you want all GPUs
+              # CHANGE THIS: Use 'device_ids' to pick specific GPU
+              device_ids: ['2']  
               capabilities: [gpu]
     # --- GPU CONFIGURATION END ---
 
