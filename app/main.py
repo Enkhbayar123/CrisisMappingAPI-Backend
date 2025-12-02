@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 import os
 import shutil
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 # Import your modules
 from . import models, schemas, database
@@ -61,7 +62,7 @@ def get_db():
 
 @app.get("/events", response_model=list[schemas.EventResponse])
 def get_events(db: Session = Depends(get_db)):
-    return db.query(models.CrisisEvent).all()
+    return db.query(models.CrisisEvent).filter(models.CrisisEvent.is_informative == True).all()
 
 # --- THE ENDPOINT ---
 @app.post("/events", response_model=schemas.EventResponse)
@@ -108,4 +109,13 @@ async def create_event(
     db.commit()
     db.refresh(new_event)
 
+
+    if not new_event.is_informative:
+        # If not informative, return a generic message.
+        # This prevents the frontend from receiving the event details.
+        return JSONResponse(
+            status_code=200, 
+            content={"message": "Report saved to database, but marked as not informative. It will not be displayed."}
+        )
+    
     return new_event
