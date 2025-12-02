@@ -65,11 +65,19 @@ async def create_event(
     db: Session = Depends(get_db)
 ):
     # 1. Save File
-    file_location = f"app/static/images/{file.filename}"
+    # Define the directory explicitly
+    upload_dir = "app/static/images"
+    
+    # CRITICAL FIX: Create the directory if it does not exist
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    file_location = f"{upload_dir}/{file.filename}"
+    
+    # Now it is safe to open the file
     with open(file_location, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
+        
     image_url = f"/static/images/{file.filename}"
-
     # 2. Run AI (Uses the pre-loaded GPU model)
     # This runs on your LOCAL SERVER resources
     ai_results = ai_engine.predict(text, file_location)
