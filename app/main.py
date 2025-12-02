@@ -22,16 +22,20 @@ async def lifespan(app: FastAPI):
 # Initialize App with Lifespan
 app = FastAPI(lifespan=lifespan)
 origins = [
-        'http://localhost:3000',
-        'https://crisis-mapping-frontend.vercel.app',
-        'http://192.168.1.47:3000',
-      ]
+    'http://localhost:3000',
+    'https://crisis-mapping-frontend.vercel.app',
+    'http://192.168.1.47:3000',
+    # Add your specific backend IP if you test directly against it from a browser
+    'http://203.252.106.25:8000', 
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins (for testing)
+    # CHANGE THIS: Use the explicit 'origins' list instead of ["*"]
+    allow_origins=origins,  
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 # Mount Static Folder
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
