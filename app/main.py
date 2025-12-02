@@ -24,10 +24,10 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins (for testing)
+    allow_origins="*",  # Allows all origins (for testing)
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods="*",  # Allows all methods
+    allow_headers="*",  # Allows all headers
 )
 # Mount Static Folder
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
