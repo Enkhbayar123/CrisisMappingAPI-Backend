@@ -1,5 +1,5 @@
 # NEW BASE IMAGE: Matches PyTorch 2.2.0 & CUDA 12.1 from your requirements.yml
-FROM pytorch/pytorch:2.2.0-cuda12.1-cudnn8-runtime
+FROM pytorch/pytorch:2.1.2-cuda11.8-cudnn8-runtime
 
 WORKDIR /code
 
