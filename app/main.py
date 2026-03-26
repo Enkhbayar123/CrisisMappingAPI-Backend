@@ -11,6 +11,13 @@ from fastapi.responses import JSONResponse
 from . import models, schemas, database
 from .ai_core.service import ai_engine  # Import the global instance
 
+from typing import Optional
+from datetime import datetime
+from fastapi import Query
+from sqlalchemy import or_, func, cast
+from geoalchemy2 import Geography
+
+
 # --- LIFESPAN (The Startup Manager) ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -119,3 +126,76 @@ async def create_event(
         )
     
     return new_event
+
+@app.get("/events", response_model=list[schemas.EventResponse])
+def get_events(
+    db: Session = Depends(get_db),
+    # 1. Text Search (Keyword matching)
+    search: Optional[str] = Query(None, description="Search in event text or location"),
+    
+    # 2. Categorical Filters
+    category: Optional[str] = Query(None, description="Filter by event category"),
+    severity: Optional[str] = Query(None, description="Filter by severity level"),
+    
+    # 3. Date Filters
+    start_date: Optional[datetime] = Query(None, description="Events from this date"),
+    end_date: Optional[datetime] = Query(None, description="Events until this date"),
+    
+    # 4. Geospatial Filters (PostGIS Magic)
+    lat: Optional[float] = Query(None, description="Center latitude for radius search"),
+    lon: Optional[float] = Query(None, description="Center longitude for radius search"),
+    radius_km: Optional[float] = Query(None, description="Radius in kilometers"),
+    
+    # 5. Pagination (Crucial for performance)
+    limit: int = Query(50, ge=1, le=100, description="Max records to return"),
+    offset: int = Query(0, ge=0, description="Records to skip")
+):
+    # Start with the base query: Only get informative events
+    query = db.query(models.CrisisEvent).filter(models.CrisisEvent.is_informative == True)
+
+    # Apply Text Search using ILIKE (case-insensitive)
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(
+            or_(
+                models.CrisisEvent.text.ilike(search_term),
+                models.CrisisEvent.location_name.ilike(search_term)
+            )
+        )
+
+    # Apply Exact Match Filters
+    if category:
+        query = query.filter(models.CrisisEvent.category == category)
+    if severity:
+        query = query.filter(models.CrisisEvent.severity == severity)
+
+    # Apply Date Range Filters
+    if start_date:
+        query = query.filter(models.CrisisEvent.created_at >= start_date)
+    if end_date:
+        query = query.filter(models.CrisisEvent.created_at <= end_date)
+
+    # Apply Geospatial Radius Search (Requires PostGIS)
+    if lat is not None and lon is not None and radius_km is not None:
+        # Convert radius from kilometers to meters
+        radius_meters = radius_km * 1000
+        
+        # Create a WKT (Well-Known Text) point for the search center
+        center_point = f"SRID=4326;POINT({lon} {lat})"
+        
+        # ST_DWithin calculates if geometries are within a given distance.
+        # We cast the Geometry to Geography so PostgreSQL calculates distance 
+        # accurately in meters over the Earth's curvature, not in flat map degrees.
+        query = query.filter(
+            func.ST_DWithin(
+                cast(models.CrisisEvent.geom, Geography),
+                cast(center_point, Geography),
+                radius_meters
+            )
+        )
+
+    # Always order by newest first, then apply pagination
+    query = query.order_by(models.CrisisEvent.created_at.desc())
+    events = query.offset(offset).limit(limit).all()
+
+    return events
