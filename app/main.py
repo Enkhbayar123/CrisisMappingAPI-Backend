@@ -67,9 +67,6 @@ def get_db():
     finally:
         db.close()
 
-@app.get("/events", response_model=list[schemas.EventResponse])
-def get_events(db: Session = Depends(get_db)):
-    return db.query(models.CrisisEvent).filter(models.CrisisEvent.is_informative == True).all()
 
 # --- THE ENDPOINT ---
 @app.post("/events", response_model=schemas.EventResponse)
