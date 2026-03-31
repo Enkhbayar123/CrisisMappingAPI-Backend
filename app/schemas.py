@@ -24,8 +24,9 @@ class EventResponse(EventBase):
 
     # AI Results
     severity: str        
-    category: str        
+    type: str        
     is_informative: bool 
+    humanitarian: str
 
     class Config:
         from_attributes = True

@@ -222,7 +222,7 @@ class CrisisAIService:
             # Map indices to Strings
             return {
                 "is_informative": INFO_LABELS[info_idx] if info_idx < len(INFO_LABELS) else False,
-                "category": CATEGORY_LABELS[cat_idx] if cat_idx < len(CATEGORY_LABELS) else "Unknown",
+                "humanitarian": CATEGORY_LABELS[cat_idx] if cat_idx < len(CATEGORY_LABELS) else "Unknown",
                 "severity": SEVERITY_LABELS[sev_idx] if sev_idx < len(SEVERITY_LABELS) else "Unknown"
             }
 

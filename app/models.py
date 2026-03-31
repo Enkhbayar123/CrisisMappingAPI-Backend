@@ -25,5 +25,6 @@ class CrisisEvent(Base):
 
     # 4. AI Results (The output of your research model)
     severity = Column(String)        # "High", "Medium", "Low"
-    category = Column(String)        # "Flood", "Fire"
+    type = Column(String)        # "Flood", "Fire"
     is_informative = Column(Boolean) # True/False
+    humanitarian = Column(String)

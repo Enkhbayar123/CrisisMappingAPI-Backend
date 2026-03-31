@@ -79,6 +79,7 @@ async def create_event(
     location_name: str = Form(...),
     latitude: float = Form(...),
     longitude: float = Form(...),
+    type: str = Form("Unknown"),
     db: Session = Depends(get_db)
 ):
     # 1. Save File
@@ -106,7 +107,8 @@ async def create_event(
         
         # Unpack AI results
         severity=ai_results["severity"],
-        category=ai_results["category"],
+        humanitarian=ai_results["humanitarian"],
+        type = type,
         
         # FIX: Convert the String "informative" to a Boolean True/False
         is_informative=(ai_results["is_informative"] == "informative")
@@ -134,7 +136,8 @@ def get_events(
     search: Optional[str] = Query(None, description="Search in event text or location"),
     
     # 2. Categorical Filters
-    category: Optional[str] = Query(None, description="Filter by event category"),
+    type: Optional[str] = Query(None, description="Filter by disaster type"),             # NEW
+    humanitarian: Optional[str] = Query(None, description="Filter by humanitarian need"), # NEW
     severity: Optional[str] = Query(None, description="Filter by severity level"),
     
     # 3. Date Filters
@@ -164,8 +167,10 @@ def get_events(
         )
 
     # Apply Exact Match Filters
-    if category:
-        query = query.filter(models.CrisisEvent.category == category)
+    if type:
+        query = query.filter(models.CrisisEvent.type == type)
+    if humanitarian:
+        query = query.filter(models.CrisisEvent.humanitarian == humanitarian)
     if severity:
         query = query.filter(models.CrisisEvent.severity == severity)
 
