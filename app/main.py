@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 from . import models, schemas, database
 from .ai_core.service import ai_engine  # Import the global instance
 
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from fastapi import Query
 from sqlalchemy import or_, func, cast
@@ -22,7 +22,7 @@ from geoalchemy2 import Geography
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # 0. ENSURE STATIC DIRECTORIES EXIST ON STARTUP
-    os.makedirs("app/static/images", exist_ok=True)
+    os.makedirs("app/static/image", exist_ok=True)
     print("Checked/Created static directories.")
 
     # 1. Startup: Load the AI Model onto the GPU
@@ -71,7 +71,7 @@ def get_db():
 # --- THE ENDPOINT ---
 @app.post("/events", response_model=schemas.EventResponse)
 async def create_event(
-    file: UploadFile = File(...), 
+    files: List[UploadFile] = File(...),  # <-- 1. Changed to accept a List of files
     text: str = Form(...), 
     location_name: str = Form(...),
     latitude: float = Form(...),
@@ -79,35 +79,42 @@ async def create_event(
     type: str = Form("Unknown"),
     db: Session = Depends(get_db)
 ):
-    # 1. Save File
-    upload_dir = "app/static/images"
+    upload_dir = "app/static/image"
     os.makedirs(upload_dir, exist_ok=True)
     
-    file_location = f"{upload_dir}/{file.filename}"
+    saved_file_paths = []
+    image_urls = []
     
-    with open(file_location, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-        
-    image_url = f"/static/images/{file.filename}"
+    # 2. Loop through all uploaded files and save them
+    for file in files:
+        file_location = f"{upload_dir}/{file.filename}"
+        with open(file_location, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+            
+        saved_file_paths.append(file_location)
+        image_urls.append(f"/static/image/{file.filename}")
 
-    # 2. Run AI (Uses the pre-loaded GPU model)
-    ai_results = ai_engine.predict(text, file_location)
+    # 3. Run AI (Assuming your AI engine currently only processes one image, 
+    # we pass the first image in the list. If it handles multiple, update this!)
+    primary_image_path = saved_file_paths[0] if saved_file_paths else None
+    ai_results = ai_engine.predict(text, primary_image_path)
+    
+    # 4. Join the URLs with a comma to fit into your existing String column!
+    # Result looks like: "/static/image/pic1.jpg,/static/image/pic2.jpg"
+    combined_image_urls = ",".join(image_urls)
+    print(f"Combined Image URLs: {combined_image_urls}")  # Debug print to verify
 
-    # 3. Save to DB
+    # 5. Save to DB
     new_event = models.CrisisEvent(
         text=text,
         location_name=location_name,
-        image_url=image_url,
+        image_url=combined_image_urls, # <-- Save the comma-separated string
         latitude=latitude,
         longitude=longitude,
         geom=f"POINT({longitude} {latitude})", 
-        
-        # Unpack AI results
         severity=ai_results["severity"],
         humanitarian=ai_results["humanitarian"],
-        type = type,
-        
-        # FIX: Convert the String "informative" to a Boolean True/False
+        type=type,
         is_informative=(ai_results["is_informative"] == "informative")
     )
 
@@ -115,10 +122,7 @@ async def create_event(
     db.commit()
     db.refresh(new_event)
 
-
     if not new_event.is_informative:
-        # If not informative, return a generic message.
-        # This prevents the frontend from receiving the event details.
         return JSONResponse(
             status_code=200, 
             content={"message": "Report saved to database, but marked as not informative. It will not be displayed."}
