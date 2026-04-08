@@ -151,7 +151,7 @@ def get_events(
     radius_km: Optional[float] = Query(None, description="Radius in kilometers"),
     
     # 5. Pagination (Crucial for performance)
-    limit: int = Query(50, ge=1, le=100, description="Max records to return"),
+    limit: int = Query(500, ge=1, le=100, description="Max records to return"),
     offset: int = Query(0, ge=0, description="Records to skip")
 ):
     # Start with the base query: Only get informative events
